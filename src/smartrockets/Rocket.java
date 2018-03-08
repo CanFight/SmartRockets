@@ -12,6 +12,7 @@ public class Rocket {
     private int currentThruster, updatesReq;
     private static final double THRUSTER_MAX = 2.0;
     private static final double SPEED_MAX = 8.0;
+    private static final int MUTATION_RATE = 200; //higer = lower chance to mutate
     private boolean alive, targetHit;
     private Point target;
     
@@ -106,7 +107,7 @@ public class Rocket {
 
     //A small chance of the gen mutating.
     private void mutation(int i) {
-        if (SmartRockets.rng.nextInt(100) < 5) {
+        if (SmartRockets.rng.nextInt(MUTATION_RATE) < 1) {
             genes[i][0] = (THRUSTER_MAX * 100 - SmartRockets.rng.nextInt((int) (THRUSTER_MAX * 200))) / 100;
             genes[i][1] = (THRUSTER_MAX * 100 - SmartRockets.rng.nextInt((int) (THRUSTER_MAX * 200))) / 100;
         }

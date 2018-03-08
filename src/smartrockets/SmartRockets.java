@@ -13,14 +13,10 @@ import java.awt.image.BufferedImage;
 import java.util.Random;
 import javax.imageio.ImageIO;
 
-public class SmartRockets implements Runnable, MouseListener, MouseMotionListener, KeyListener{
+public class SmartRockets implements Runnable, MouseListener, MouseMotionListener, KeyListener {
 
     public static int UPDATES_PER_SEC = 60;
-    private static final int UPDATES_PER_SEC_BASE = 60;
-    public static double GAME_PIXEL_FIX = 1.0;
-    public static double GAME_SPEED_FIX = 1.0;
     public static int FRAMES_PER_SEC = 60;
-    private int framesC, updatesC;
     private double nsPerFrame, nsPerUpdate;
     private boolean isRunning;
 
@@ -29,10 +25,10 @@ public class SmartRockets implements Runnable, MouseListener, MouseMotionListene
     private double drawOffsetX = 50, drawOffsetY = 50, mouseX, mouseY;
     private static int tileSize = 10;
     private GameFrame frame;
-    private boolean camMove = false, drawTool = false, eraseTool = false;
+    private boolean camMove = false, drawTool = false, eraseTool = false, fastForward = false, megaEvolve = false;
 
-    private RocketLauncher rL;
-    
+    private RocketLauncher rocketLauncher;
+
     public SmartRockets() {
         rng = new Random();
         map = new int[100][100];
@@ -40,7 +36,7 @@ public class SmartRockets implements Runnable, MouseListener, MouseMotionListene
         frame.addMouseListener(this);
         frame.addMouseMotionListener(this);
         frame.addKeyListener(this);
-        rL = new RocketLauncher();
+        rocketLauncher = new RocketLauncher();
         isRunning = true;
         new Thread(this).start();
     }
@@ -55,11 +51,6 @@ public class SmartRockets implements Runnable, MouseListener, MouseMotionListene
         double unprocessedTime = 0;
         double unprocessedTimeFPS = 0;
 
-        int frames = 0;
-        int updates = 0;
-
-        long frameCounter = System.currentTimeMillis();
-
         while (isRunning) {
 
             long currentTime = System.nanoTime();
@@ -70,22 +61,12 @@ public class SmartRockets implements Runnable, MouseListener, MouseMotionListene
 
             if (unprocessedTime >= nsPerUpdate) {
                 unprocessedTime = 0;
-                updates++;
                 update();
             }
 
             if (unprocessedTimeFPS >= nsPerFrame) {
                 unprocessedTimeFPS = 0;
                 render();
-                frames++;
-            }
-
-            if (System.currentTimeMillis() - frameCounter >= 1000) {
-                framesC = frames;
-                updatesC = updates;
-                frames = 0;
-                updates = 0;
-                frameCounter += 1000;
             }
 
         }
@@ -93,7 +74,19 @@ public class SmartRockets implements Runnable, MouseListener, MouseMotionListene
     }
 
     private void update() {
-        rL.update();
+        rocketLauncher.update();
+        if (fastForward) {
+            fastForward = false;
+            for (int i = 0; i < 300; i++) {
+                update();
+            }
+        }
+        if (megaEvolve) {
+            megaEvolve = false;
+            for (int i = 0; i < 100000; i++) {
+                update();
+            }
+        }
     }
 
     public void dispose() {
@@ -122,10 +115,16 @@ public class SmartRockets implements Runnable, MouseListener, MouseMotionListene
                 g.fillRect((int) drawOffsetX + x * tileSize, (int) drawOffsetY + y * tileSize, tileSize, tileSize);
             }
         }
-        rL.draw((int) drawOffsetX,(int) drawOffsetY, g);
-        g.setColor(Color.blue);
-        g.setFont(new Font("LucidaSans", Font.PLAIN, 15));
-        g.drawString("FPS: " + framesC, 25, 50);
+        rocketLauncher.draw((int) drawOffsetX, (int) drawOffsetY, g);
+        g.setColor(Color.green);
+        g.setFont(new Font("LucidaSans", Font.BOLD, 15));
+        g.drawString("Commands:", 25, 75);
+        g.drawString("T - Move Target To Mouse", 25, 100);
+        g.drawString("R - Move Launcher To Mouse", 25, 125);
+        g.drawString("E - Fast Forward", 25, 150);
+        g.drawString("W - Fast Evolve?", 25, 175);
+        g.drawString("Left Mouse Button - Draw Walls", 25, 200);
+        g.drawString("Right Mouse Button - Erase Walls", 25, 225);
         g.dispose();
         bs.show();
     }
@@ -196,10 +195,10 @@ public class SmartRockets implements Runnable, MouseListener, MouseMotionListene
             drawOffsetX += e.getX() - mouseX;
             drawOffsetY += e.getY() - mouseY;
         }
-        if(drawTool){
+        if (drawTool) {
             changeTile(e.getX(), e.getY(), 1);
         }
-        if(eraseTool){
+        if (eraseTool) {
             changeTile(e.getX(), e.getY(), 0);
         }
         mouseX = e.getX();
@@ -211,19 +210,25 @@ public class SmartRockets implements Runnable, MouseListener, MouseMotionListene
         mouseX = e.getX();
         mouseY = e.getY();
     }
-    
+
     @Override
     public void keyTyped(KeyEvent e) {
     }
 
     @Override
     public void keyPressed(KeyEvent e) {
-        switch(e.getKeyCode()){
+        switch (e.getKeyCode()) {
             case KeyEvent.VK_R:
-                    rL.moveLauncher((int)(mouseX - drawOffsetX), (int)(mouseY - drawOffsetY));
+                rocketLauncher.moveLauncher((int) (mouseX - drawOffsetX), (int) (mouseY - drawOffsetY));
                 break;
             case KeyEvent.VK_T:
-                    rL.moveTarget((int)(mouseX - drawOffsetX), (int)(mouseY - drawOffsetY));
+                rocketLauncher.moveTarget((int) (mouseX - drawOffsetX), (int) (mouseY - drawOffsetY));
+                break;
+            case KeyEvent.VK_E:
+                fastForward = true;
+                break;
+            case KeyEvent.VK_W:
+                megaEvolve = true;
                 break;
         }
     }
@@ -231,7 +236,7 @@ public class SmartRockets implements Runnable, MouseListener, MouseMotionListene
     @Override
     public void keyReleased(KeyEvent e) {
     }
-    
+
     public static BufferedImage loadImage(String path) {
         try {
             return ImageIO.read(smartrockets.SmartRockets.class.getResource("Resources/Textures/" + path));
@@ -240,6 +245,5 @@ public class SmartRockets implements Runnable, MouseListener, MouseMotionListene
             return null;
         }
     }
-
 
 }

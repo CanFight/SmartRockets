@@ -1,6 +1,7 @@
 package smartrockets;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.util.ArrayList;
@@ -10,11 +11,13 @@ public class RocketLauncher {
     private ArrayList<Rocket> rockets;
     private Point target;
     private Point launcherPosition;
+    private int generation;
 
     public RocketLauncher() {
         target = new Point(500, 500);
         launcherPosition = new Point(100, 100);
         rockets = new ArrayList();
+        generation = 0;
         for (int i = 0; i < 20; i++) {
             rockets.add(new Rocket(launcherPosition.x, launcherPosition.y, target));
             rockets.get(rockets.size() - 1).getRandomGenes();
@@ -29,6 +32,9 @@ public class RocketLauncher {
         for (Rocket r : rockets) {
             r.draw(oX, oY, g);
         }
+        g.setColor(Color.PINK);
+        g.setFont(new Font("LucidaSans", Font.BOLD, 15));
+        g.drawString("Generation: " + generation, 25, 50);
     }
 
     public void update() {
@@ -73,13 +79,16 @@ public class RocketLauncher {
                 r.resetRocket(launcherPosition.x, launcherPosition.y);
             }
         }
+        generation++;
     }
     
     public void moveLauncher(int x, int y){
         launcherPosition.setLocation(x, y);
+        generation = 0;
     }
     
     public void moveTarget(int x, int y){
         target.setLocation(x, y);
+        generation = 0;
     }
 }
