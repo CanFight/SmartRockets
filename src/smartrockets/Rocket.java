@@ -13,6 +13,7 @@ public class Rocket {
     private static final double THRUSTER_MAX = 2.0;
     private static final double SPEED_MAX = 8.0;
     private static final int MUTATION_RATE = 200; //higer = lower chance to mutate
+    private static final int MUTATION_FREAK_FACTOR = 20;
     private boolean alive, targetHit;
     private Point target;
     
@@ -50,11 +51,21 @@ public class Rocket {
             genes[i][1] = (THRUSTER_MAX * 100 - SmartRockets.rng.nextInt((int) (THRUSTER_MAX * 200))) / 100;
         }
     }
+    
+    private boolean freakMutation(){
+        if (SmartRockets.rng.nextInt(MUTATION_FREAK_FACTOR) < 1) {
+            getRandomGenes();
+            return true;
+        }
+        return false;
+    }
 
     public void draw(int oX, int oY,Graphics g) {
         g.setColor(Color.red);
         g.fillOval(oX + (int) posX - 6, oY + (int) posY - 6, 12, 12);
     }
+    
+    
 
     public void move() {
         if (alive && !targetHit) {
@@ -93,6 +104,8 @@ public class Rocket {
 
     //Aquires Genes Randomly from 2 genes.
     public void getGenesFromParent(double[][] p1, double[][] p2) {
+        if(freakMutation()) return;
+        
         for (int i = 0; i < genes.length; i++) {
             if (SmartRockets.rng.nextBoolean()) {
                 genes[i][0] = p1[i][0];
